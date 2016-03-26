@@ -9,6 +9,7 @@ __version__ = 0.2
 __author__ = "Jan Klopper <jan@underdark.nl>"
 
 import pygame
+from pygame.locals import *
 import struct
 import time
 from gevent import spawn, socket, monkey
@@ -49,7 +50,9 @@ class Canvas(object):
   def canvas(self, width=1366, height=768):
     """Init the pygame canvas"""
     pygame.init()
-    self.screen = pygame.display.set_mode((width, height))
+    pygame.mixer.quit()
+    flags = DOUBLEBUF
+    self.screen = pygame.display.set_mode((width, height), flags)
 
   def clear(self, r=0, g=0, b=0): # pylint: disable=C0103
     """ Fill the entire screen with a solid colour (default: black)"""
@@ -78,6 +81,7 @@ class Canvas(object):
     else:
       preamble = struct.unpack_from("<?", data)[0]
       protocol = struct.unpack_from("<B", data, 1)[0]
+      packetformat = ("<2H4B" if preamble else "<2H3B")
       pixellength = 7 #xx,yy,r,g,b
       if preamble:
         pixellength = 8 #xx,yy,r,g,b,a
@@ -86,7 +90,7 @@ class Canvas(object):
         print '%d pixels received, protocol V %d ' % (pixelcount, protocol)
       for i in xrange(0, pixelcount):
         pixel = struct.unpack_from(
-            ("<2H4B" if preamble else "<2H3B"),
+            packetformat,
             data,
             self.pixeloffset + (i*pixellength))
         if self.debug:
