@@ -65,20 +65,21 @@ class Canvas(object):
   def CanvasUpdate(self):
     """Updates the screen according to self.fps"""
     lasttime = time.time()
+    changed = False
     while True:
       currenttime = time.time()
-      self.Draw()
+      changed = self.Draw() or changed
       if currenttime - lasttime >= 1 / self.fps:
         pygame.display.flip()
+        changed = False
         lasttime = time.time()
 
   def Draw(self):
     """Draws pixels specified in the received packages in the queue"""
-    try:
+    if self.queue.empty():
+      return False
+    while not self.queue.empty():
       data = self.queue.get()
-    except:
-      raise
-    else:
       preamble = struct.unpack_from("<?", data)[0]
       protocol = struct.unpack_from("<B", data, 1)[0]
       packetformat = ("<2H4B" if preamble else "<2H3B")
@@ -96,6 +97,7 @@ class Canvas(object):
         if self.debug:
           print pixel
         self.Pixel(*pixel)
+    return True
 
 class PixelVloed(DatagramServer):
   """PixelVloed server class"""
