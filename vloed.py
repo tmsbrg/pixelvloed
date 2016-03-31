@@ -67,18 +67,18 @@ class Canvas(object):
     lasttime = time.time()
     changed = False
     while True:
-      currenttime = time.time()
-      changed = self.Draw() or changed
-      if currenttime - lasttime >= 1 / self.fps:
+      nextdraw = time.time() + (1 / self.fps)
+      changed = self.Draw(nextdraw) or changed
+      if time.time() - lasttime >= 1 / self.fps:
         pygame.display.flip()
         changed = False
         lasttime = time.time()
 
-  def Draw(self):
+  def Draw(self, returntime):
     """Draws pixels specified in the received packages in the queue"""
     if self.queue.empty():
       return False
-    while not self.queue.empty():
+    while not self.queue.empty() and time.time() < returntime:
       data = self.queue.get()
       preamble = struct.unpack_from("<?", data)[0]
       protocol = struct.unpack_from("<B", data, 1)[0]
