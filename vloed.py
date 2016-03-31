@@ -35,7 +35,7 @@ class Canvas(object):
     self.screen = None
     self.udp_ip = UDP_IP
     self.udp_port = UDP_PORT
-    self.canvas()
+    self.canvas()    
     self.set_title()
     self.queue = queue
 
@@ -60,32 +60,41 @@ class Canvas(object):
 
   def Pixel(self, x, y, r, g, b, a=255): # pylint: disable=C0103
     """Print a pixel to the screen"""
-    self.screen.set_at((x, y), (r, g, b, a))
+    self.pixels[x][y] = (r, g, b)
 
   def CanvasUpdate(self):
     """Updates the screen according to self.fps"""
     lasttime = time.time()
     changed = False
     while True:
-      nextdraw = time.time() + (1 / self.fps)
-      changed = self.Draw(nextdraw) or changed
+      changed = self.Draw() or changed
       if time.time() - lasttime >= 1 / self.fps:
+        del(self.pixels) # release the lock on these pixels so we can flip
         pygame.display.flip()
         changed = False
         lasttime = time.time()
+      else:
+        time.sleep(1 / self.fps)
 
-  def Draw(self, returntime):
+  def Draw(self):
     """Draws pixels specified in the received packages in the queue"""
     if self.queue.empty():
+      # indicat that nothing was done, and w can skip flipping the screen
       return False
+    #access the pixel array and lock it
+    self.pixels = pygame.surfarray.pixels2d(self.screen) 
+    returntime = time.time() + (1 / self.fps)
+    # while we have stuff in the queue, and its not our next time to draw a 
+    # frame, lets process packets from the queue
     while not self.queue.empty() and time.time() < returntime:
       data = self.queue.get()
       preamble = struct.unpack_from("<?", data)[0]
       protocol = struct.unpack_from("<B", data, 1)[0]
       packetformat = ("<2H4B" if preamble else "<2H3B")
-      pixellength = 7 #xx,yy,r,g,b
-      if preamble:
-        pixellength = 8 #xx,yy,r,g,b,a
+      pixellength = (8 #xx,yy,r,g,b,a 
+                     if preamble else 
+                     7 #xx,yy,r,g,b
+                     )
       pixelcount = (len(data)-1) / pixellength
       if self.debug:
         print '%d pixels received, protocol V %d ' % (pixelcount, protocol)
@@ -97,6 +106,7 @@ class Canvas(object):
         if self.debug:
           print pixel
         self.Pixel(*pixel)
+    # indicate that we have been drawing stuff
     return True
 
 class PixelVloed(DatagramServer):
