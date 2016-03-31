@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""This is a udp / binary client
+"""This is an udp / binary client
 
 Inspired by the PixelFlut beamer on eth0:winter 2016 and
 code from https://github.com/defnull/pixelflut/
