@@ -60,7 +60,10 @@ class Canvas(object):
 
   def Pixel(self, x, y, r, g, b, a=255): # pylint: disable=C0103
     """Print a pixel to the screen"""
-    self.pixels[x][y] = (r, g, b)
+    try:
+      self.pixels[x][y] = (r*256*256) + (g*256) + b
+    except IndexError:
+      pass
 
   def CanvasUpdate(self):
     """Updates the screen according to self.fps"""
@@ -68,13 +71,13 @@ class Canvas(object):
     changed = False
     while True:
       changed = self.Draw() or changed
-      if time.time() - lasttime >= 1 / self.fps and changed:
-        del(self.pixels) # release the lock on these pixels so we can flip
+      if time.time() - lasttime >= 1.0 / self.fps and changed:
+        self.pixels = None # release the lock on these pixels so we can flip
         pygame.display.flip()
         changed = False
         lasttime = time.time()
       else:
-        time.sleep(1 / self.fps)
+        time.sleep(1.0 / self.fps)
 
   def Draw(self):
     """Draws pixels specified in the received packages in the queue"""
@@ -83,10 +86,10 @@ class Canvas(object):
       return False
     #access the pixel array and lock it
     self.pixels = pygame.surfarray.pixels2d(self.screen) 
-    returntime = time.time() + (1 / self.fps)
+    returntime = time.time() + (1.0 / self.fps)
     # while we have stuff in the queue, and its not our next time to draw a 
     # frame, lets process packets from the queue
-    while not self.queue.empty() and time.time() < returntime:
+    while time.time() < returntime and not self.queue.empty():
       data = self.queue.get()
       preamble = struct.unpack_from("<?", data)[0]
       protocol = struct.unpack_from("<B", data, 1)[0]
