@@ -68,7 +68,7 @@ class Canvas(object):
     changed = False
     while True:
       changed = self.Draw() or changed
-      if time.time() - lasttime >= 1 / self.fps:
+      if time.time() - lasttime >= 1 / self.fps and changed:
         del(self.pixels) # release the lock on these pixels so we can flip
         pygame.display.flip()
         changed = False
