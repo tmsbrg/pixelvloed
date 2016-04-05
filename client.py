@@ -11,6 +11,20 @@ __author__ = "Jan Klopper <jan@underdark.nl>"
 import socket
 import struct
 import random
+import time
+
+class MaxSizeList(list):
+  maxsize = 0
+
+  def __init__(self, maxcount=100):
+    self.maxsize = maxcount
+    super( MaxSizeList, self ).__init__()
+
+  def append(self, item):
+    super( MaxSizeList, self ).append(item)
+    if self.__len__() == self.maxsize:
+      raise IndexError('max size reached')
+
 
 def RGBPixel(x, y, r, g, b, a=None): # pylint: disable=C0103
   """Generates the packed data for a pixel"""
@@ -28,15 +42,22 @@ def SetVersionBit(protocol=1):
 
 def RandomFill(width=640, height=480):
   """Generates a random number of pixels with a random color"""
-  message = SetRGBAMode(False)
-  message += SetVersionBit()
+  message = MaxSizeList(140)
+  message.append(SetRGBAMode(False))
+  message.append(SetVersionBit())
   for pixel in xrange(0, random.randint(10, 100)):
-    message += RGBPixel(random.randint(0, width),
-                        random.randint(0, height),
-                        random.randint(0, 255),
-                        random.randint(0, 255),
-                        random.randint(0, 255))
-  return message
+    pixel = RGBPixel(random.randint(0, width),
+                     random.randint(0, height),
+                     random.randint(0, 255),
+                     random.randint(0, 255),
+                     random.randint(0, 255))
+    try:
+      message.append(pixel)
+    except IndexError:
+      yield ''.join(message)
+      message[:] = []
+      message.append(pixel)
+  yield ''.join(message)
 
 def SendPacket(ipaddress, port, message):
   """Sends the message to the udp server"""
@@ -50,7 +71,9 @@ def main():
   port = 5005
 
   while True:
-    SendPacket(ipaddress, port, RandomFill())
+    for packet in RandomFill():
+      time.sleep(0.01)
+      SendPacket(ipaddress, port, packet)
 
 if __name__ == '__main__':
   main()
