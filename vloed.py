@@ -38,6 +38,7 @@ class Canvas(object):
     self.canvas()    
     self.set_title()
     self.queue = queue
+    self.limit = 140
 
   @staticmethod
   def set_title(text=None):
@@ -100,7 +101,8 @@ class Canvas(object):
                      )
       pixelcount = (len(data)-1) / pixellength
       if self.debug:
-        print '%d pixels received, protocol V %d ' % (pixelcount, protocol)
+        print '%d pixels received, protocol V %d ' % (
+            min(pixelcount, self.limit), protocol)
       for i in xrange(0, pixelcount):
         pixel = struct.unpack_from(
             packetformat,
