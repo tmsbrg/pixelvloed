@@ -14,7 +14,6 @@ import random
 import time
 
 class MaxSizeList(list):
-  maxsize = 0
 
   def __init__(self, maxcount=100):
     self.maxsize = maxcount
@@ -24,7 +23,6 @@ class MaxSizeList(list):
     super( MaxSizeList, self ).append(item)
     if self.__len__() == self.maxsize:
       raise IndexError('max size reached')
-
 
 def RGBPixel(x, y, r, g, b, a=None): # pylint: disable=C0103
   """Generates the packed data for a pixel"""
@@ -55,7 +53,7 @@ def RandomFill(width=640, height=480):
       message.append(pixel)
     except IndexError:
       yield ''.join(message)
-      message[:] = []
+      message[2:] = []
       message.append(pixel)
   yield ''.join(message)
 

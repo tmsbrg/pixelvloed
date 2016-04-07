@@ -35,7 +35,7 @@ class Canvas(object):
     self.screen = None
     self.udp_ip = UDP_IP
     self.udp_port = UDP_PORT
-    self.canvas()    
+    self.canvas()
     self.set_title()
     self.queue = queue
     self.limit = 140
@@ -86,31 +86,34 @@ class Canvas(object):
       # indicat that nothing was done, and w can skip flipping the screen
       return False
     #access the pixel array and lock it
-    self.pixels = pygame.surfarray.pixels2d(self.screen) 
+    self.pixels = pygame.surfarray.pixels2d(self.screen)
     returntime = time.time() + (1.0 / self.fps)
-    # while we have stuff in the queue, and its not our next time to draw a 
+    # while we have stuff in the queue, and its not our next time to draw a
     # frame, lets process packets from the queue
     while time.time() < returntime and not self.queue.empty():
-      data = self.queue.get()
-      preamble = struct.unpack_from("<?", data)[0]
-      protocol = struct.unpack_from("<B", data, 1)[0]
-      packetformat = ("<2H4B" if preamble else "<2H3B")
-      pixellength = (8 #xx,yy,r,g,b,a 
-                     if preamble else 
-                     7 #xx,yy,r,g,b
-                     )
-      pixelcount = (len(data)-1) / pixellength
-      if self.debug:
-        print '%d pixels received, protocol V %d ' % (
-            min(pixelcount, self.limit), protocol)
-      for i in xrange(0, pixelcount):
-        pixel = struct.unpack_from(
-            packetformat,
-            data,
-            self.pixeloffset + (i*pixellength))
+      try:
+        data = self.queue.get()
+        preamble = struct.unpack_from("<?", data)[0]
+        protocol = struct.unpack_from("<B", data, 1)[0]
+        packetformat = ("<2H4B" if preamble else "<2H3B")
+        pixellength = (8 #xx,yy,r,g,b,a
+                       if preamble else
+                       7 #xx,yy,r,g,b
+                       )
+        pixelcount = (len(data)-1) / pixellength
         if self.debug:
-          print pixel
-        self.Pixel(*pixel)
+          print '%d pixels received, protocol V %d ' % (
+              min(pixelcount, self.limit), protocol)
+        for i in xrange(0, pixelcount):
+          pixel = struct.unpack_from(
+              packetformat,
+              data,
+              self.pixeloffset + (i*pixellength))
+          if self.debug:
+            print pixel
+          self.Pixel(*pixel)
+      except Exception as e:    #All exceptions will be printed, but won't result in a crash.
+        print e
     # indicate that we have been drawing stuff
     return True
 
