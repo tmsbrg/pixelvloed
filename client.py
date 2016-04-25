@@ -5,8 +5,11 @@ Inspired by the PixelFlut beamer on eth0:winter 2016 and
 code from https://github.com/defnull/pixelflut/
 """
 
-__version__ = 0.1
+__version__ = 0.2
 __author__ = "Jan Klopper <jan@underdark.nl>"
+
+MAX_PROTOCOL_VERSION = 1;
+PROTOCOL_PREAMBLE = 'pixelvloed'
 
 import socket
 import struct
@@ -65,15 +68,48 @@ def SendPacket(ipaddress, port, message):
                        socket.SOCK_DGRAM) # UDP
   sock.sendto(message, (ipaddress, port))
 
-def main():
-  """Sends some random pixels untill we break with ctrl+c"""
-  ipaddress = "127.0.0.1"
-  port = 5005
+def DiscoverServers(discoveryport, timeout=5):
+  """Discover servers that send out the pixelfvloed preample"""
+  DiscoverySock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  DiscoverySock.bind(('', discoveryport))
+  starttime = time.time()
+  servers = []
+  foundhash = {}
+  while (time.time() - timeout) < starttime:
+    data, addr = DiscoverySock.recvfrom(1024)
+    try:
+      if data.startswith(PROTOCOL_PREAMBLE):
+        dataset = data.split(' ')
+        if float(dataset[0].split(':')[1]) <= MAX_PROTOCOL_VERSION:
+          ip = dataset[1].split(':')[0]
+          port = int(dataset[1].split(':')[1])
+          width = int(dataset[2].split('*')[0])
+          height = int(dataset[2].split('*')[1])
+          if data not in foundhash:
+            newserver = {'ip': ip,
+                         'port': port,
+                         'width': width,
+                         'height': height}
+            foundhash[data] = True
+            print 'New pixelvloed screen found: %r' % newserver
+            servers.append(newserver)
+    except:
+      pass
+  if servers:
+    return servers
+  return False
 
+def main():
+  """Discover the servers and start sending to the first one"""
+  discoveryport = 5006
+  servers = False
+  while servers == False:
+    servers = DiscoverServers(discoveryport)
+  print 'displaying on %(ip)s:%(port)d, %(width)d*%(height)dpx' % servers[0]
   while True:
-    for packet in RandomFill():
+    for packet in RandomFill(servers[0]['width'], servers[0]['height']):
       time.sleep(0.01)
-      SendPacket(ipaddress, port, packet)
+      SendPacket(servers[0]['ip'], servers[0]['port'], packet)
 
 if __name__ == '__main__':
   main()

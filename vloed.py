@@ -19,6 +19,8 @@ from gevent.queue import Queue
 monkey.patch_all()
 UDP_IP = "127.0.0.1"
 UDP_PORT= 5005
+PROTOCOL_VERSION = 1
+PROTOCOL_PREAMBLE = "pixelvloed"
 
 def main():
   """Runs a pixelvloed server"""
@@ -27,7 +29,7 @@ def main():
 class Canvas(object):
   """PixelVloed server class"""
 
-  def __init__(self, queue, debug=False):
+  def __init__(self, queue, width=1366, height=768, debug=True):
     """Init the pixelVloed server"""
     self.debug = debug
     self.pixeloffset = 2
@@ -35,10 +37,15 @@ class Canvas(object):
     self.screen = None
     self.udp_ip = UDP_IP
     self.udp_port = UDP_PORT
+    self.width = width
+    self.height = height
     self.canvas()    
     self.set_title()
     self.queue = queue
     self.limit = 140
+    self.broadcastSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    self.broadcastSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    self.broadcastSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
   @staticmethod
   def set_title(text=None):
@@ -48,12 +55,12 @@ class Canvas(object):
       title += ' ' + text
     pygame.display.set_caption(title)
 
-  def canvas(self, width=1366, height=768):
+  def canvas(self):
     """Init the pygame canvas"""
     pygame.init()
     pygame.mixer.quit()
     flags = DOUBLEBUF
-    self.screen = pygame.display.set_mode((width, height), flags)
+    self.screen = pygame.display.set_mode((self.width, self.height), flags)
 
   def clear(self, r=0, g=0, b=0): # pylint: disable=C0103
     """ Fill the entire screen with a solid colour (default: black)"""
@@ -69,9 +76,14 @@ class Canvas(object):
   def CanvasUpdate(self):
     """Updates the screen according to self.fps"""
     lasttime = time.time()
+    lastbroadcast = time.time()
     changed = False
     while True:
       changed = self.Draw() or changed
+      if time.time() - lastbroadcast > 2:
+        lastbroadcast = time.time()
+        self.SendDiscoveryPacket()
+
       if time.time() - lasttime >= 1.0 / self.fps and changed:
         self.pixels = None # release the lock on these pixels so we can flip
         pygame.display.flip()
@@ -99,10 +111,10 @@ class Canvas(object):
                      if preamble else 
                      7 #xx,yy,r,g,b
                      )
-      pixelcount = (len(data)-1) / pixellength
+      pixelcount = min(((len(data)-1) / pixellength),
+                       self.limit)
       if self.debug:
-        print '%d pixels received, protocol V %d ' % (
-            min(pixelcount, self.limit), protocol)
+        print '%d pixels received, protocol V %d ' % (pixelcount, protocol)
       for i in xrange(0, pixelcount):
         pixel = struct.unpack_from(
             packetformat,
@@ -113,6 +125,20 @@ class Canvas(object):
         self.Pixel(*pixel)
     # indicate that we have been drawing stuff
     return True
+
+  def SendDiscoveryPacket(self):
+    """Lets send out our ip/port/resolution to any listening clients"""
+    self.broadcastSocket.sendto(
+        '%s:%f %s:%d %d*%d' % (PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
+                               UDP_IP, UDP_PORT,
+                               self.width, self.height),
+        ('<broadcast>', UDP_PORT+1))
+    if self.debug:
+      print 'sending discovery packet'
+
+  def __del__(self):
+    """Clean up any sockets we created"""
+    self.broadcastSocket.close()
 
 class PixelVloed(DatagramServer):
   """PixelVloed server class"""
