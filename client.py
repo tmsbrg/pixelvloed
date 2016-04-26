@@ -43,7 +43,7 @@ def SetVersionBit(protocol=1):
 
 def RandomFill(width=640, height=480):
   """Generates a random number of pixels with a random color"""
-  message = MaxSizeList(140)
+  message = MaxSizeList(142)
   message.append(SetRGBAMode(False))
   message.append(SetVersionBit())
   for pixel in xrange(0, random.randint(10, 100)):
@@ -57,7 +57,6 @@ def RandomFill(width=640, height=480):
     except IndexError:
       yield ''.join(message)
       message[2:] = []
-      message.append(pixel)
   yield ''.join(message)
 
 def SendPacket(ipaddress, port, message):
