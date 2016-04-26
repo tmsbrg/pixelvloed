@@ -29,7 +29,7 @@ def main():
 class Canvas(object):
   """PixelVloed server class"""
 
-  def __init__(self, queue, width=1366, height=768, debug=True):
+  def __init__(self, queue, width=1366, height=768, debug=False):
     """Init the pixelVloed server"""
     self.debug = debug
     self.pixeloffset = 2
