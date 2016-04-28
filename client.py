@@ -9,11 +9,11 @@ __version__ = 0.3
 __author__ = "Jan Klopper <jan@underdark.nl>"
 
 import random
-from vloed import PixelVloedClient, NewMessage, RGBPixel
+from vloed import PixelVloedClient, NewMessage, RGBPixel, MAX_PIXELS
 
 def RandomFill(message, width, height):
   """Generates a random number of pixels with a random color"""
-  for pixel in xrange(0, random.randint(10, 140)):
+  for pixel in xrange(0, random.randint(10, MAX_PIXELS)):
     pixel = RGBPixel(random.randint(0, width),
                      random.randint(0, height),
                      random.randint(0, 255),
