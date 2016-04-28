@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """This is a udp / binary version of PixelFlut
 
-Inspired by the PixelFlut beamer on eth0:winter 2016 and
+Inspired by the PixelFlut projector on eth0:winter 2016 and
 code from https://github.com/defnull/pixelflut/
 """
 
@@ -97,7 +97,7 @@ class Canvas(object):
   def Draw(self):
     """Draws pixels specified in the received packages in the queue"""
     if self.queue.empty():
-      # indicat that nothing was done, and w can skip flipping the screen
+      # indicate that nothing was done, and we can skip flipping the screen
       return False
     #access the pixel array and lock it
     self.pixels = pygame.surfarray.pixels2d(self.screen)
@@ -220,7 +220,7 @@ class PixelVloedClient(object):
 
   @staticmethod
   def DiscoverServers(returnfirst=False, timeout=5):
-    """Discover servers that send out the pixelfvloed preample"""
+    """Discover servers that send out the pixelvloed preample"""
     discoverysock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     discoverysock.bind(('', DISCOVER_PORT))
     starttime = time.time()
