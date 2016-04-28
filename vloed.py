@@ -198,7 +198,7 @@ class PixelVloedClient(object):
             servers[0])
     else:
       self.ipaddress = ip
-      self.port = port
+      self.port = port if port else UDP_IP
       self.width = width
       self.height = height
       if self.debug:
