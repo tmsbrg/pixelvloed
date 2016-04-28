@@ -135,13 +135,17 @@ class Canvas(object):
 
   def SendDiscoveryPacket(self):
     """Lets send out our ip/port/resolution to any listening clients"""
-    self.broadcastsocket.sendto(
-        '%s:%f %s:%d %d*%d' % (PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
-                               UDP_IP, UDP_PORT,
-                               self.width, self.height),
-        ('<broadcast>', DISCOVER_PORT))
-    if self.debug:
-      print 'sending discovery packet'
+    try:
+      self.broadcastsocket.sendto(
+          '%s:%f %s:%d %d*%d' % (PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
+                                 UDP_IP, UDP_PORT,
+                                 self.width, self.height),
+          ('<broadcast>', DISCOVER_PORT))
+      if self.debug:
+        print 'sending discovery packet'
+    except Exception as error:
+      if self.debug:
+        print error
 
   def __del__(self):
     """Clean up any sockets we created"""
