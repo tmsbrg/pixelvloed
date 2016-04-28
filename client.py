@@ -23,7 +23,7 @@ def RandomFill(message, width, height):
       message.append(pixel)
     except IndexError:
       yield ''.join(message)
-      message[2:] = []
+      message[2:] = [pixel]
   yield ''.join(message)
 
 def RunClient():

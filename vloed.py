@@ -290,9 +290,9 @@ class MaxSizeList(list):
 
   def append(self, item):
     """Appends an item to the list"""
-    super(MaxSizeList, self).append(item)
     if self.__len__() == self.maxsize:
       raise IndexError('max size reached')
+    super(MaxSizeList, self).append(item)
 
 def RunServer():
   """Runs a pixelvloed server"""
