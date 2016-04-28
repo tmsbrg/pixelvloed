@@ -71,7 +71,17 @@ class Canvas(object):
   def Pixel(self, x, y, r, g, b, a=255): # pylint: disable=C0103
     """Print a pixel to the screen"""
     try:
-      self.pixels[x][y] = (r*256*256) + (g*256) + b
+      if a != 255:
+        self.pixels[x][y] = (r*256*256) + (g*256) + b
+      else:
+        old = self.pixels[x][y]
+        oldr = old >> 16
+        oldg = (old & 0x00ff00) / 256
+        oldb = old & 0x0000ff
+        red = (r * a) + (oldr * (1.0 - a))
+        green = (g * a) + (oldg * (1.0 - a))
+        blue = (b * a) + (oldb * (1.0 - a))
+        self.pixels[x][y] = (red*256*256) + (green*256) + blue
     except IndexError:
       pass
 
