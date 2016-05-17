@@ -26,24 +26,26 @@ PROTOCOL_VERSION = 1
 MAX_PROTOCOL_VERSION = 1
 PROTOCOL_PREAMBLE = "pixelvloed"
 MAX_PIXELS = 140
+DEFAULT_WIDTH = 786
+DEFAULT_HEIGHT = 1366
 
 class Canvas(object):
   """PixelVloed display class"""
 
-  def __init__(self, queue, width=1366, height=768, debug=False):
+  def __init__(self, queue, options):
     """Init the pixelVloed server"""
-    self.debug = debug
+    self.debug = options.debug if options.debug else False
     self.pixeloffset = 2
     self.fps = 30
     self.screen = None
     self.udp_ip = UDP_IP
     self.udp_port = UDP_PORT
-    self.width = width
-    self.height = height
+    self.width = options.width if options.width else DEFAULT_WIDTH
+    self.height = options.height if options.height else DEFAULT_HEIGHT
     self.canvas()
     self.set_title()
     self.queue = queue
-    self.limit = MAX_PIXELS
+    self.limit = options.maxpixels if options.maxpixels else MAX_PIXELS
     self.pixels = None
     self.broadcastsocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     self.broadcastsocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -87,8 +89,7 @@ class Canvas(object):
 
   def CanvasUpdate(self):
     """Updates the screen according to self.fps"""
-    lasttime = time.time()
-    lastbroadcast = time.time()
+    lasttime = lastbroadcast = time.time()
     changed = False
     while True:
       changed = self.Draw() or changed
@@ -167,8 +168,9 @@ class PixelVloedServer(DatagramServer):
   def __init__(self, *args, **kwargs):
     """Set up some vars for this instance"""
     self.queue = Queue()
-    pixelcanvas = Canvas(self.queue)
+    pixelcanvas = Canvas(self.queue, kwargs['options'])
     __request_processing_greenlet = spawn(pixelcanvas.CanvasUpdate)
+    del (kwargs['options'])
     DatagramServer.__init__(self, *args, **kwargs)
 
   def handle(self, data, _address):
@@ -208,7 +210,7 @@ class PixelVloedClient(object):
             servers[0])
     else:
       self.ipaddress = ip
-      self.port = port if port else UDP_IP
+      self.port = port if port else UDP_PORT
       self.width = width
       self.height = height
       if self.debug:
@@ -275,7 +277,7 @@ def NewMessage():
 
 def RGBPixel(x, y, r, g, b, a=None): # pylint: disable=C0103
   """Generates the packed data for a pixel"""
-  if a:
+  if a is not None:
     return struct.pack("<2H4B", x, y, r, g, b, a)
   return struct.pack("<2H3B", x, y, r, g, b)
 
@@ -304,9 +306,23 @@ class MaxSizeList(list):
       raise IndexError('max size reached')
     super(MaxSizeList, self).append(item)
 
-def RunServer():
+def RunServer(options):
   """Runs a pixelvloed server"""
-  PixelVloedServer('%s:%d' %(UDP_IP, UDP_PORT)).serve_forever()
+  PixelVloedServer('%s:%d' %(options.ip, options.port),
+                   options=options).serve_forever()
 
 if __name__ == '__main__':
-  RunServer()
+  import optparse
+  parser = optparse.OptionParser()
+  parser.add_option('-v', action="store_true", dest="debug", default=False)
+  parser.add_option('-i', action="store", dest="ip", default=UDP_IP)
+  parser.add_option('-p', action="store", dest="port", default=UDP_PORT,
+                    type="int")
+  parser.add_option('-x', action="store", dest="width", default=DEFAULT_WIDTH,
+                    type="int")
+  parser.add_option('-y', action="store", dest="height", default=DEFAULT_HEIGHT,
+                    type="int")
+  parser.add_option('-m', action="store", dest="maxpixels", default=MAX_PIXELS,
+                    type="int")
+  options, remainder = parser.parse_args()
+  RunServer(options)
