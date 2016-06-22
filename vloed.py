@@ -40,6 +40,7 @@ class Canvas(object):
     self.screen = None
     self.udp_ip = UDP_IP
     self.udp_port = UDP_PORT
+    self.factor = options.factor if options.factor else 1
     self.width = options.width if options.width else DEFAULT_WIDTH
     self.height = options.height if options.height else DEFAULT_HEIGHT
     self.canvas()
@@ -74,7 +75,13 @@ class Canvas(object):
     """Print a pixel to the screen"""
     try:
       if a == 255:
-        self.pixels[x][y] = (r*256*256) + (g*256) + b
+        color = (r*256*256) + (g*256) + b
+        if self.factor>1:
+          for w in xrange(0, self.factor):
+            for h in xrange(0, self.factor):
+              self.pixels[(x*self.factor) + w][(y*self.factor) + h] = color
+        else:
+          self.pixels[x][y] = color
       else:
         old = self.pixels[x][y]
         oldr = old >> 16
@@ -148,9 +155,10 @@ class Canvas(object):
     """Lets send out our ip/port/resolution to any listening clients"""
     try:
       self.broadcastsocket.sendto(
-          '%s:%f %s:%d %d*%d' % (PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
-                                 UDP_IP, UDP_PORT,
-                                 self.width, self.height),
+          '%s:%f %s:%d %d*%d' % (
+              PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
+              UDP_IP, UDP_PORT,
+              self.width/self.factor, self.height/self.factor),
           ('<broadcast>', DISCOVER_PORT))
       if self.debug:
         print 'sending discovery packet'
@@ -323,6 +331,8 @@ if __name__ == '__main__':
   parser.add_option('-y', action="store", dest="height", default=DEFAULT_HEIGHT,
                     type="int")
   parser.add_option('-m', action="store", dest="maxpixels", default=MAX_PIXELS,
+                    type="int")
+  parser.add_option('-f', action="store", dest="factor", default=1,
                     type="int")
   options, remainder = parser.parse_args()
   RunServer(options)
