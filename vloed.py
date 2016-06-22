@@ -8,17 +8,20 @@ code from https://github.com/defnull/pixelflut/
 __version__ = 0.3
 __author__ = "Jan Klopper <jan@underdark.nl>"
 
+# import gevent monkeypatching and perform patch_all before anything else to
+# avoid nasty eception on python closing time
+from gevent import spawn, monkey
+monkey.patch_all()
+
 import pygame
 from pygame import locals as pygamelocals
 import struct
 import time
 import socket
 
-from gevent import spawn, monkey
 from gevent.server import DatagramServer
 from gevent.queue import Queue
 
-monkey.patch_all()
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
 DISCOVER_PORT = 5006
@@ -335,4 +338,7 @@ if __name__ == '__main__':
   parser.add_option('-f', action="store", dest="factor", default=1,
                     type="int")
   options, remainder = parser.parse_args()
-  RunServer(options)
+  try:
+    RunServer(options)
+  except KeyboardInterrupt:
+    print 'Closing server'

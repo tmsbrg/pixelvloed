@@ -49,4 +49,7 @@ def RunClient():
 if __name__ == '__main__':
   # if this script is called from the command line, and thus not imported
   # start a client and start sending messages
-  RunClient()
+  try:
+    RunClient()
+  except KeyboardInterrupt:
+    print 'Closing client'
