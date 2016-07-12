@@ -225,8 +225,11 @@ class PixelVloedClient(object):
       self.width = width
       self.height = height
       if self.debug:
-        print ('displaying on %(ip)s:%(port)d, %(width)d*%(height)dpx' %
-            self)
+        print ('displaying on %(ipaddress)s:%(port)d, %(width)d*%(height)dpx' %
+            {'ipaddress': self.ipaddress,
+             'port': self.port,
+             'width': self.width,
+             'height': self.height})
     self.sock = socket.socket(socket.AF_INET, # Internet
                               socket.SOCK_DGRAM) # UDP
 

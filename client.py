@@ -26,15 +26,15 @@ def RandomFill(message, width, height):
       message[2:] = [pixel]
   yield ''.join(message)
 
-def RunClient():
+def RunClient(options):
   """Discover the servers and start sending to the first one"""
 
   client = PixelVloedClient(True, # start as soon as we find a server
-                            False, # show debugging output
-                            None, # ip of the server, None for autodetect
-                            None, # port of the server None for autodetect
-                            None, # Screen pixels wide, None for autodetect
-                            None  # Screen pixels height, None for autodetect
+                            options.debug, # show debugging output
+                            options.ip, # ip of the server, None for autodetect
+                            options.port, # port of the server None for autodetect
+                            options.width, # Screen pixels wide, None for autodetect
+                            options.height  # Screen pixels height, None for autodetect
                             )
   message = NewMessage() #create a new message that buffers the output etc
 
@@ -49,7 +49,19 @@ def RunClient():
 if __name__ == '__main__':
   # if this script is called from the command line, and thus not imported
   # start a client and start sending messages
+  import optparse
+  parser = optparse.OptionParser()
+  parser.add_option('-v', action="store_true", dest="debug", default=False)
+  parser.add_option('-i', action="store", dest="ip", default=None)
+  parser.add_option('-p', action="store", dest="port", default=None,
+                    type="int")
+  parser.add_option('-x', action="store", dest="width", default=None,
+                    type="int")
+  parser.add_option('-y', action="store", dest="height", default=None,
+                    type="int")
+  options, remainder = parser.parse_args()
+
   try:
-    RunClient()
+    RunClient(options)
   except KeyboardInterrupt:
     print 'Closing client'

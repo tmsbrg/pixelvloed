@@ -16,7 +16,6 @@ from gevent import spawn, monkey
 monkey.patch_all()
 
 import sdl2.ext
-from pygame import locals as pygamelocals
 import struct
 import time
 import socket
