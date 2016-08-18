@@ -135,9 +135,9 @@ int main(int argc, char* argv[])
         //printf("%d %d %d %d %d %d\n", x, y, packet[i  ], packet[i+1], packet[i+2], packet[i+3]);
         if(x < vinfo.xres && y < vinfo.yres){
             pix_offset = bpp * x + y * finfo.line_length;
-            fbp[pix_offset++] = packet[i+4];
+            fbp[pix_offset++] = packet[i+6];
             fbp[pix_offset++] = packet[i+5];
-            fbp[pix_offset] = packet[i+6];
+            fbp[pix_offset] = packet[i+4];
         }
       }
     }
