@@ -36,8 +36,8 @@ class Canvas(object):
     self.pixeloffset = 2
     self.fps = 30
     self.screen = None
-    self.udp_ip = UDP_IP
-    self.udp_port = UDP_PORT
+    self.udp_ip = options.ip if options.ip else UDP_IP
+    self.udp_port = options.port if options.port else UDP_PORT
     self.factor = options.factor if options.factor else 1
     self.width = options.width if options.width else DEFAULT_WIDTH
     self.height = options.height if options.height else DEFAULT_HEIGHT
