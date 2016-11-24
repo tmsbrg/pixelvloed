@@ -155,7 +155,7 @@ class Canvas(object):
       self.broadcastsocket.sendto(
           '%s:%f %s:%d %d*%d' % (
               PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
-              UDP_IP, UDP_PORT,
+              self.udp_ip, self.udp_port,
               self.width/self.factor, self.height/self.factor),
           ('<broadcast>', DISCOVER_PORT))
       if self.debug:
