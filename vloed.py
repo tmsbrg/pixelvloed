@@ -24,8 +24,6 @@ PROTOCOL_VERSION = 1
 MAX_PROTOCOL_VERSION = 1
 PROTOCOL_PREAMBLE = "pixelvloed"
 MAX_PIXELS = 140
-DEFAULT_WIDTH = 786
-DEFAULT_HEIGHT = 1366
 
 class Canvas(object):
   """PixelVloed display class"""
@@ -39,8 +37,6 @@ class Canvas(object):
     self.udp_ip = options.ip if options.ip else UDP_IP
     self.udp_port = options.port if options.port else UDP_PORT
     self.factor = options.factor if options.factor else 1
-    self.width = options.width if options.width else DEFAULT_WIDTH
-    self.height = options.height if options.height else DEFAULT_HEIGHT
     self.canvas()
     self.set_title()
     self.queue = queue
@@ -61,6 +57,10 @@ class Canvas(object):
   def canvas(self):
     """Init the pygame canvas"""
     pygame.init()
+    screeninfo = pygame.display.Info()
+    print options.width
+    self.width = options.width if options.width else screeninfo.current_w
+    self.height = options.height if options.height else screeninfo.current_h
     pygame.mixer.quit()
     self.screen = pygame.display.set_mode((self.width, self.height),
                                           pygamelocals.DOUBLEBUF)
@@ -333,10 +333,8 @@ if __name__ == '__main__':
   parser.add_option('-i', action="store", dest="ip", default=UDP_IP)
   parser.add_option('-p', action="store", dest="port", default=UDP_PORT,
                     type="int")
-  parser.add_option('-x', action="store", dest="width", default=DEFAULT_WIDTH,
-                    type="int")
-  parser.add_option('-y', action="store", dest="height", default=DEFAULT_HEIGHT,
-                    type="int")
+  parser.add_option('-x', action="store", dest="width", type="int")
+  parser.add_option('-y', action="store", dest="height", type="int")
   parser.add_option('-m', action="store", dest="maxpixels", default=MAX_PIXELS,
                     type="int")
   parser.add_option('-f', action="store", dest="factor", default=1,
