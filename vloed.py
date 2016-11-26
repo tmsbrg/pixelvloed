@@ -9,7 +9,7 @@ __version__ = 0.3
 __author__ = "Jan Klopper <jan@underdark.nl>"
 
 if __name__ == '__main__':
-  # avoid nasty eception on python closing time
+  # avoid nasty exception on python closing time
   from gevent import spawn, monkey
   monkey.patch_all()
 

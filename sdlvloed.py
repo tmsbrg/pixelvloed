@@ -12,16 +12,13 @@ __author__ = "Jan Klopper <jan@underdark.nl>"
 
 # import gevent monkeypatching and perform patch_all before anything else to
 # avoid nasty eception on python closing time
-from gevent import spawn, monkey
-monkey.patch_all()
+if __name__ == '__main__':
+  from gevent import spawn, monkey
+  monkey.patch_all()
 
-import sdl2.ext
 import struct
 import time
 import socket
-
-from gevent.server import DatagramServer
-from gevent.queue import Queue
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
@@ -176,21 +173,6 @@ class Canvas(object):
     """Clean up any sockets we created"""
     self.broadcastsocket.close()
 
-class PixelVloedServer(DatagramServer):
-  """PixelVloed server class"""
-
-  def __init__(self, *args, **kwargs):
-    """Set up some vars for this instance"""
-    self.queue = Queue()
-    pixelcanvas = Canvas(self.queue, kwargs['options'])
-    __request_processing_greenlet = spawn(pixelcanvas.CanvasUpdate)
-    del (kwargs['options'])
-    DatagramServer.__init__(self, *args, **kwargs)
-
-  def handle(self, data, _address):
-    """Is called by the DataGramServer whenever an udp package is received"""
-    self.queue.put(data)
-
 class PixelVloedClient(object):
   """Sets up a client
 
@@ -326,6 +308,26 @@ def RunServer(options):
                    options=options).serve_forever()
 
 if __name__ == '__main__':
+  import sdl2.ext
+
+  from gevent.server import DatagramServer
+  from gevent.queue import Queue
+
+  class PixelVloedServer(DatagramServer):
+    """PixelVloed server class"""
+
+    def __init__(self, *args, **kwargs):
+      """Set up some vars for this instance"""
+      self.queue = Queue()
+      pixelcanvas = Canvas(self.queue, kwargs['options'])
+      __request_processing_greenlet = spawn(pixelcanvas.CanvasUpdate)
+      del (kwargs['options'])
+      DatagramServer.__init__(self, *args, **kwargs)
+
+    def handle(self, data, _address):
+      """Is called by the DataGramServer whenever an udp package is received"""
+      self.queue.put(data)
+
   import optparse
   parser = optparse.OptionParser()
   parser.add_option('-v', action="store_true", dest="debug", default=False)
