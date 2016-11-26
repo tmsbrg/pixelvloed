@@ -42,8 +42,8 @@ class Canvas(object):
     self.pixeloffset = 2
     self.fps = 30
     self.screen = None
-    self.udp_ip = UDP_IP
-    self.udp_port = UDP_PORT
+    self.udp_ip = options.ip if options.ip else UDP_IP
+    self.udp_port = options.port if options.port else UDP_PORT
     self.factor = options.factor if options.factor else 1
     self.width = options.width if options.width else DEFAULT_WIDTH
     self.height = options.height if options.height else DEFAULT_HEIGHT
@@ -67,11 +67,11 @@ class Canvas(object):
   def canvas(self):
     """Init the pygame canvas"""
     sdl2.ext.init()
-    self.screen = sdl2.ext.Window(self.set_title(), 
+    self.screen = sdl2.ext.Window(self.set_title(),
                                   size=(self.width, self.height))
     self.screen.show()
     self.surface = self.screen.get_surface()
-    
+
   def Pixel(self, x, y, r, g, b, a=255): # pylint: disable=C0103
     """Print a pixel to the screen"""
     try:
@@ -108,7 +108,7 @@ class Canvas(object):
       #    break
       if time.time() - lastbroadcast > 2:
         lastbroadcast = time.time()
-        self.SendDiscoveryPacket()        
+        self.SendDiscoveryPacket()
 
       if time.time() - lasttime >= 1.0 / self.fps and changed:
         self.pixels = None # release the lock on these pixels so we can flip
@@ -117,7 +117,7 @@ class Canvas(object):
         lasttime = time.time()
       else:
         time.sleep(1.0 / self.fps)
-    
+
   def Draw(self):
     """Draws pixels specified in the received packages in the queue"""
     if self.queue.empty():
@@ -163,7 +163,7 @@ class Canvas(object):
       self.broadcastsocket.sendto(
           '%s:%f %s:%d %d*%d' % (
               PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
-              UDP_IP, UDP_PORT,
+              self.udp_ip, self.udp_port,
               self.width/self.factor, self.height/self.factor),
           ('<broadcast>', DISCOVER_PORT))
       if self.debug:
