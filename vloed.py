@@ -58,7 +58,6 @@ class Canvas(object):
     """Init the pygame canvas"""
     pygame.init()
     screeninfo = pygame.display.Info()
-    print options.width
     self.width = options.width if options.width else screeninfo.current_w
     self.height = options.height if options.height else screeninfo.current_h
     pygame.mixer.quit()
