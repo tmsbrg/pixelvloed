@@ -237,16 +237,16 @@ class PixelVloedClient(object):
     """Sleeps the designated amount of time"""
     time.sleep(duration if duration else self.sleep)
 
-  def SendPacket(self, message, sleep=True):
+  def SendPacket(self, message, sleep=0.01):
     """Sends the message to the udp server
 
     Arguments:
       message: (str, 140)
-      sleep:  (bool) True, should the client sleep for a while?
+      sleep:  (float) 0.01, duration of time the client should sleep
     """
     self.sock.sendto(message, (self.ipaddress, self.port))
     if sleep:
-      self.Sleep()
+      self.Sleep(duration=0.01)
 
   @staticmethod
   def DiscoverServers(returnfirst=False, timeout=5):
