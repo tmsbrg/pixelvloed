@@ -16,6 +16,11 @@ if __name__ == '__main__':
   from gevent import spawn, monkey
   monkey.patch_all()
 
+try:
+  import gtk
+except ImportError:
+  gtk = None
+
 import struct
 import time
 import socket
@@ -27,8 +32,8 @@ PROTOCOL_VERSION = 1
 MAX_PROTOCOL_VERSION = 1
 PROTOCOL_PREAMBLE = "pixelvloed"
 MAX_PIXELS = 140
-DEFAULT_WIDTH = 786
-DEFAULT_HEIGHT = 1366
+DEFAULT_WIDTH = 1366
+DEFAULT_HEIGHT = 786
 
 class Canvas(object):
   """PixelVloed display class"""
@@ -42,8 +47,6 @@ class Canvas(object):
     self.udp_ip = options.ip if options.ip else UDP_IP
     self.udp_port = options.port if options.port else UDP_PORT
     self.factor = options.factor if options.factor else 1
-    self.width = options.width if options.width else DEFAULT_WIDTH
-    self.height = options.height if options.height else DEFAULT_HEIGHT
     self.canvas()
 
     self.queue = queue
@@ -64,6 +67,13 @@ class Canvas(object):
   def canvas(self):
     """Init the pygame canvas"""
     sdl2.ext.init()
+    if gtk:
+      window = gtk.Window()
+      screen = window.get_screen()
+    self.width = gtk.gdk.screen_width() if gtk else DEFAULT_WIDTH
+    self.height = gtk.gdk.screen_height() if gtk else DEFAULT_HEIGHT
+    self.width = options.width if options.width else self.width
+    self.height = options.height if options.height else self.height
     self.screen = sdl2.ext.Window(self.set_title(),
                                   size=(self.width, self.height))
     self.screen.show()
@@ -334,10 +344,8 @@ if __name__ == '__main__':
   parser.add_option('-i', action="store", dest="ip", default=UDP_IP)
   parser.add_option('-p', action="store", dest="port", default=UDP_PORT,
                     type="int")
-  parser.add_option('-x', action="store", dest="width", default=DEFAULT_WIDTH,
-                    type="int")
-  parser.add_option('-y', action="store", dest="height", default=DEFAULT_HEIGHT,
-                    type="int")
+  parser.add_option('-x', action="store", dest="width", type="int")
+  parser.add_option('-y', action="store", dest="height", type="int")
   parser.add_option('-m', action="store", dest="maxpixels", default=MAX_PIXELS,
                     type="int")
   parser.add_option('-f', action="store", dest="factor", default=1,
