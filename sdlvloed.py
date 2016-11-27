@@ -12,16 +12,18 @@ __author__ = "Jan Klopper <jan@underdark.nl>"
 
 # import gevent monkeypatching and perform patch_all before anything else to
 # avoid nasty eception on python closing time
-from gevent import spawn, monkey
-monkey.patch_all()
+if __name__ == '__main__':
+  from gevent import spawn, monkey
+  monkey.patch_all()
 
-import sdl2.ext
+try:
+  import gtk
+except ImportError:
+  gtk = None
+
 import struct
 import time
 import socket
-
-from gevent.server import DatagramServer
-from gevent.queue import Queue
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
@@ -30,8 +32,8 @@ PROTOCOL_VERSION = 1
 MAX_PROTOCOL_VERSION = 1
 PROTOCOL_PREAMBLE = "pixelvloed"
 MAX_PIXELS = 140
-DEFAULT_WIDTH = 786
-DEFAULT_HEIGHT = 1366
+DEFAULT_WIDTH = 1366
+DEFAULT_HEIGHT = 786
 
 class Canvas(object):
   """PixelVloed display class"""
@@ -42,11 +44,9 @@ class Canvas(object):
     self.pixeloffset = 2
     self.fps = 30
     self.screen = None
-    self.udp_ip = UDP_IP
-    self.udp_port = UDP_PORT
+    self.udp_ip = options.ip if options.ip else UDP_IP
+    self.udp_port = options.port if options.port else UDP_PORT
     self.factor = options.factor if options.factor else 1
-    self.width = options.width if options.width else DEFAULT_WIDTH
-    self.height = options.height if options.height else DEFAULT_HEIGHT
     self.canvas()
 
     self.queue = queue
@@ -67,11 +67,18 @@ class Canvas(object):
   def canvas(self):
     """Init the pygame canvas"""
     sdl2.ext.init()
-    self.screen = sdl2.ext.Window(self.set_title(), 
+    if gtk:
+      window = gtk.Window()
+      screen = window.get_screen()
+    self.width = gtk.gdk.screen_width() if gtk else DEFAULT_WIDTH
+    self.height = gtk.gdk.screen_height() if gtk else DEFAULT_HEIGHT
+    self.width = options.width if options.width else self.width
+    self.height = options.height if options.height else self.height
+    self.screen = sdl2.ext.Window(self.set_title(),
                                   size=(self.width, self.height))
     self.screen.show()
     self.surface = self.screen.get_surface()
-    
+
   def Pixel(self, x, y, r, g, b, a=255): # pylint: disable=C0103
     """Print a pixel to the screen"""
     try:
@@ -108,7 +115,7 @@ class Canvas(object):
       #    break
       if time.time() - lastbroadcast > 2:
         lastbroadcast = time.time()
-        self.SendDiscoveryPacket()        
+        self.SendDiscoveryPacket()
 
       if time.time() - lasttime >= 1.0 / self.fps and changed:
         self.pixels = None # release the lock on these pixels so we can flip
@@ -117,7 +124,7 @@ class Canvas(object):
         lasttime = time.time()
       else:
         time.sleep(1.0 / self.fps)
-    
+
   def Draw(self):
     """Draws pixels specified in the received packages in the queue"""
     if self.queue.empty():
@@ -163,7 +170,7 @@ class Canvas(object):
       self.broadcastsocket.sendto(
           '%s:%f %s:%d %d*%d' % (
               PROTOCOL_PREAMBLE, PROTOCOL_VERSION,
-              UDP_IP, UDP_PORT,
+              self.udp_ip, self.udp_port,
               self.width/self.factor, self.height/self.factor),
           ('<broadcast>', DISCOVER_PORT))
       if self.debug:
@@ -175,21 +182,6 @@ class Canvas(object):
   def __del__(self):
     """Clean up any sockets we created"""
     self.broadcastsocket.close()
-
-class PixelVloedServer(DatagramServer):
-  """PixelVloed server class"""
-
-  def __init__(self, *args, **kwargs):
-    """Set up some vars for this instance"""
-    self.queue = Queue()
-    pixelcanvas = Canvas(self.queue, kwargs['options'])
-    __request_processing_greenlet = spawn(pixelcanvas.CanvasUpdate)
-    del (kwargs['options'])
-    DatagramServer.__init__(self, *args, **kwargs)
-
-  def handle(self, data, _address):
-    """Is called by the DataGramServer whenever an udp package is received"""
-    self.queue.put(data)
 
 class PixelVloedClient(object):
   """Sets up a client
@@ -237,16 +229,16 @@ class PixelVloedClient(object):
     """Sleeps the designated amount of time"""
     time.sleep(duration if duration else self.sleep)
 
-  def SendPacket(self, message, sleep=True):
+  def SendPacket(self, message, sleep=0.01):
     """Sends the message to the udp server
 
     Arguments:
       message: (str, 140)
-      sleep:  (bool) True, should the client sleep for a while?
+      sleep:  (float) 0.01, duration of time the client should sleep
     """
     self.sock.sendto(message, (self.ipaddress, self.port))
     if sleep:
-      self.Sleep()
+      self.Sleep(duration=0.01)
 
   @staticmethod
   def DiscoverServers(returnfirst=False, timeout=5):
@@ -326,16 +318,34 @@ def RunServer(options):
                    options=options).serve_forever()
 
 if __name__ == '__main__':
+  import sdl2.ext
+
+  from gevent.server import DatagramServer
+  from gevent.queue import Queue
+
+  class PixelVloedServer(DatagramServer):
+    """PixelVloed server class"""
+
+    def __init__(self, *args, **kwargs):
+      """Set up some vars for this instance"""
+      self.queue = Queue()
+      pixelcanvas = Canvas(self.queue, kwargs['options'])
+      __request_processing_greenlet = spawn(pixelcanvas.CanvasUpdate)
+      del (kwargs['options'])
+      DatagramServer.__init__(self, *args, **kwargs)
+
+    def handle(self, data, _address):
+      """Is called by the DataGramServer whenever an udp package is received"""
+      self.queue.put(data)
+
   import optparse
   parser = optparse.OptionParser()
   parser.add_option('-v', action="store_true", dest="debug", default=False)
   parser.add_option('-i', action="store", dest="ip", default=UDP_IP)
   parser.add_option('-p', action="store", dest="port", default=UDP_PORT,
                     type="int")
-  parser.add_option('-x', action="store", dest="width", default=DEFAULT_WIDTH,
-                    type="int")
-  parser.add_option('-y', action="store", dest="height", default=DEFAULT_HEIGHT,
-                    type="int")
+  parser.add_option('-x', action="store", dest="width", type="int")
+  parser.add_option('-y', action="store", dest="height", type="int")
   parser.add_option('-m', action="store", dest="maxpixels", default=MAX_PIXELS,
                     type="int")
   parser.add_option('-f', action="store", dest="factor", default=1,
