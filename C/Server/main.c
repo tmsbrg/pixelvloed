@@ -68,10 +68,8 @@ int main(int argc, char* argv[])
   // draw...
   int x, y;
   uint8_t r, g, b, a;
-  int pixeloffset = 2;
+  int pixeloffset = 1;
   int pixellength = 0;
-  
-
   
   while( (packet_size = get_udp_packet(sock_fd, packet, sizeof(packet))) >= 0 ) {
     if((uint8_t)packet[0] == 1){
@@ -90,11 +88,11 @@ int main(int argc, char* argv[])
         i+=pixellength){
 	    x = (uint8_t)packet[i  ] + (((uint8_t)packet[i+1])<<8);
 	    y = (uint8_t)packet[i+2] + (((uint8_t)packet[i+3])<<8);
-	    r = packet[i+6];
+	    r = packet[i+4];
 	    g = packet[i+5];
-	    b = packet[i+4];
+	    b = packet[i+6];
 	    a = 0;
-      //printf("%d %d %d %d %d %d\n", x, y, packet[i  ], packet[i+1], packet[i+2], packet[i+3]);
+      //printf("%d %d %d %d %d %d\n", x, y, r, g, b, a);
       // Write pixel to screen
       write_pixel_to_screen(x, y, r, g, b, a);
     }

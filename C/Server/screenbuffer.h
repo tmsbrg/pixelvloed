@@ -6,6 +6,6 @@
 
 int8_t init_frame_buffer(void);
 void deinit_frame_buffer(void);
-void write_pixel_to_screen(uint16_t x, uint16_t y, uint16_t r, uint16_t g, uint16_t b, uint8_t a);
+void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 #endif
