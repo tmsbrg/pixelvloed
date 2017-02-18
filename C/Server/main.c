@@ -53,10 +53,12 @@ static ssize_t get_udp_packet(int sock_fd, char *packet, size_t size)
 // application entry point
 int main(int argc, char* argv[])
 {
-  
-
-  char packet[1120];
+  uint8_t packet[1120 + 32];
   ssize_t packet_size;
+  uint16_t x, y;
+  uint8_t r, g, b, a;
+  uint8_t pixellength = 0, protocol, version;
+  uint16_t i;
 
   int sock_fd = get_udp_socket(UDP_PORT);
   
@@ -66,36 +68,101 @@ int main(int argc, char* argv[])
   }
 
   // draw...
-  int x, y;
-  uint8_t r, g, b, a;
-  int pixeloffset = 1;
-  int pixellength = 0;
-  
-  while( (packet_size = get_udp_packet(sock_fd, packet, sizeof(packet))) >= 0 ) {
-    if((uint8_t)packet[0] == 1){
-      pixellength = 8;
-    } else {
-      pixellength = 7;
-    }
-
-    // how many pixels
-    //pixelcount = (packet_size-1)/pixellength;
-    //printf("%d pixels in packet of size: %d using a pixel size of: %d \n", pixelcount, packet_size, pixellength);
-    // fetch a pixel from the udp socket
-    int i = 0;
-    for(i=pixeloffset;  // skip pixeloffset
-        i<packet_size-(pixellength-1); // walk trough all bytes untill we get to the end minus one package length
-        i+=pixellength){
-	    x = (uint8_t)packet[i  ] + (((uint8_t)packet[i+1])<<8);
-	    y = (uint8_t)packet[i+2] + (((uint8_t)packet[i+3])<<8);
-	    r = packet[i+4];
-	    g = packet[i+5];
-	    b = packet[i+6];
-	    a = 0;
-      //printf("%d %d %d %d %d %d\n", x, y, r, g, b, a);
-      // Write pixel to screen
-      write_pixel_to_screen(x, y, r, g, b, a);
-    }
+  while( (packet_size = get_udp_packet(sock_fd, (char*)&packet, sizeof(packet))) >= 0 ) {
+    
+    
+    
+    // Get protocol from the packet
+    version = packet[1];    // 
+    protocol = packet[0];   // Alpha in old
+    
+    //printf("V:%d, P:%d\n", version, protocol);
+    
+    switch (protocol) {
+      // Protocol 0: xyrgb 16:16:8:8:8 specified for each pixel
+      case 0:
+        pixellength = 7;
+        for (i=2; i<packet_size; i+=pixellength) {
+          x = packet[i  ] | packet[i+1]<<8;
+	        y = packet[i+2] | packet[i+3]<<8;
+	        r = packet[i+4];
+	        g = packet[i+5];
+	        b = packet[i+6];
+	        a = 0xFF;
+	        write_pixel_to_screen(x, y, r, g, b, a);
+	      }
+	      break;
+	    // Protocol 1: xyrgba 16:16:8:8:8:8 specified for each pixel
+      case 1:
+        pixellength = 8;
+        for (i=2; i<packet_size; i+=pixellength) {
+          x = packet[i  ] | packet[i+1]<<8;
+	        y = packet[i+2] | packet[i+3]<<8;
+	        r = packet[i+4];
+	        g = packet[i+5];
+	        b = packet[i+6];
+	        a = packet[i+7];
+	        write_pixel_to_screen(x, y, r, g, b, a);
+	      }
+	      break;
+	    // Protocol 2: xyrgb 12:12:8:8:8 specified for each pixel
+      case 2:
+        pixellength = 6;
+        for (i=2; i<packet_size; i+=pixellength) {
+          x = packet[i  ] | (packet[i+1]&0xF0)<<4;
+	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
+	        r = packet[i+3];
+	        g = packet[i+4];
+	        b = packet[i+5];
+	        a = 0xFF;
+	        write_pixel_to_screen(x, y, r, g, b, a);
+	      }
+	      break;
+	    // Protocol 3: xyrgba 12:12:8:8:8:8 specified for each pixel
+      case 3:
+        pixellength = 7;
+        for (i=2; i<packet_size; i+=pixellength) {
+          x = packet[i  ] | (packet[i+1]&0xF0)<<4;
+	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
+	        r = packet[i+3];
+	        g = packet[i+4];
+	        b = packet[i+5];
+	        a = packet[i+6];
+	        write_pixel_to_screen(x, y, r, g, b, a);
+	      }
+	      break;
+	    // Protocol 4: xyrgb 12:12:3:3:2 specified for each pixel
+      case 4:
+        pixellength = 4;
+        for (i=2; i<packet_size; i+=pixellength) {
+          x = packet[i  ] | (packet[i+1]&0xF0)<<4;
+	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
+	        r = packet[i+3] & 0xE0;
+	        g = packet[i+3]<<3 & 0xE0;
+	        b = packet[i+3]<<6 & 0xC0;
+	        a = 0xFF;
+	        write_pixel_to_screen(x, y, r, g, b, a);
+	      }
+	      break;
+	    // Protocol 5: xyrgba 12:12:2:2:2:2 specified for each pixel
+      case 5:
+        pixellength = 4;
+        for (i=2; i<packet_size; i+=pixellength) {
+          x = packet[i  ] | (packet[i+1]&0xF0)<<4;
+	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
+	        r = packet[i+3] & 0xC0;
+	        g = packet[i+3]<<2 & 0xC0;
+	        b = packet[i+3]<<4 & 0xC0;
+	        a = packet[i+3]<<6 & 0xC0;
+	        write_pixel_to_screen(x, y, r, g, b, a);
+	      }
+	      break;
+	    // Error no protocol defined
+	    default:
+	      break;
+	  }
+    
+    
   }
   
   // De init screen buffer

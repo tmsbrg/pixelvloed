@@ -8,7 +8,7 @@ HFILES	:=	$(foreach dir,$(HDIR),$(wildcard $(dir)/*.h))
 build:
 	@echo
 	@echo Compiling and linking files
-	$(CC) $(CFILES) -I $(IDIR) -o pixelvloed -Wall
+	$(CC) $(CFILES) -I $(IDIR) -Os -o pixelvloed -Wall
 	@echo Done
 	@echo
 	
