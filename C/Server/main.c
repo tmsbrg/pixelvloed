@@ -14,14 +14,16 @@
 #define UDP_PORT 5005    // the port users will be connecting to
 #define DISCOVER_PORT 5006    // the port on which the server will broadcast its details
 
-static void die(char *msg)
-{
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+
+#define MAX_PIXELS 140
+
+static void die(char *msg) {
 	fprintf(stderr, "%s\n", msg);
 	exit(EXIT_FAILURE);
 }
 
-static int get_udp_socket(int port)
-{
+static int get_udp_socket(int port) {
 	int sock_fd;
 	struct sockaddr_in6 addr;
 
@@ -41,8 +43,7 @@ static int get_udp_socket(int port)
 }
 
 
-static ssize_t get_udp_packet(int sock_fd, char *packet, size_t size)
-{
+static ssize_t get_udp_packet(int sock_fd, char *packet, size_t size) {
 	ssize_t n_read;
 	while ((n_read = recv(sock_fd, packet, size, 0)) < 0 );
 	return n_read;
@@ -51,30 +52,27 @@ static ssize_t get_udp_packet(int sock_fd, char *packet, size_t size)
 // PixelVloed C version
 
 // application entry point
-int main(int argc, char* argv[])
-{
-  uint8_t packet[1120 + 32];
+int main(int argc, char* argv[]) {
+  uint8_t packet[ (8 * MAX_PIXELS) + 32]; // 8 bytes per pixel is the maximum size
   ssize_t packet_size;
   uint16_t x, y;
   uint8_t r, g, b, a;
   uint8_t pixellength = 0, protocol, version;
   uint16_t i;
+  uint8_t offset = 2;
 
   int sock_fd = get_udp_socket(UDP_PORT);
-  
+
   // Init screen buffer
   if (!init_frame_buffer()) {
     die("Failed to init screen buffer.\n");
   }
 
-  // draw...
+  // draw each udp packet
   while( (packet_size = get_udp_packet(sock_fd, (char*)&packet, sizeof(packet))) >= 0 ) {
-    
-    
-    
     // Get protocol from the packet
-    version = packet[1];    // 
-    protocol = packet[0];   // Alpha in old
+    version = packet[1];    // the version
+    protocol = packet[0];   // protocol switch
     
     //printf("V:%d, P:%d\n", version, protocol);
     
@@ -82,7 +80,8 @@ int main(int argc, char* argv[])
       // Protocol 0: xyrgb 16:16:8:8:8 specified for each pixel
       case 0:
         pixellength = 7;
-        for (i=2; i<packet_size; i+=pixellength) {
+        packet_size = MIN(offset + (pixellength * MAX_PIXELS), packet_size);
+        for (i=offset; i<packet_size; i+=pixellength) {
           x = packet[i  ] | packet[i+1]<<8;
 	        y = packet[i+2] | packet[i+3]<<8;
 	        r = packet[i+4];
@@ -92,10 +91,12 @@ int main(int argc, char* argv[])
 	        write_pixel_to_screen(x, y, r, g, b, a);
 	      }
 	      break;
+
 	    // Protocol 1: xyrgba 16:16:8:8:8:8 specified for each pixel
       case 1:
         pixellength = 8;
-        for (i=2; i<packet_size; i+=pixellength) {
+        packet_size = MIN(offset + (pixellength * MAX_PIXELS), packet_size);
+        for (i=offset; i<packet_size; i+=pixellength) {
           x = packet[i  ] | packet[i+1]<<8;
 	        y = packet[i+2] | packet[i+3]<<8;
 	        r = packet[i+4];
@@ -105,10 +106,12 @@ int main(int argc, char* argv[])
 	        write_pixel_to_screen(x, y, r, g, b, a);
 	      }
 	      break;
+
 	    // Protocol 2: xyrgb 12:12:8:8:8 specified for each pixel
       case 2:
         pixellength = 6;
-        for (i=2; i<packet_size; i+=pixellength) {
+        packet_size = MIN(offset + (pixellength * MAX_PIXELS), packet_size);
+        for (i=offset; i<packet_size; i+=pixellength) {
           x = packet[i  ] | (packet[i+1]&0xF0)<<4;
 	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
 	        r = packet[i+3];
@@ -118,10 +121,12 @@ int main(int argc, char* argv[])
 	        write_pixel_to_screen(x, y, r, g, b, a);
 	      }
 	      break;
+
 	    // Protocol 3: xyrgba 12:12:8:8:8:8 specified for each pixel
       case 3:
         pixellength = 7;
-        for (i=2; i<packet_size; i+=pixellength) {
+        packet_size = MIN(offset + (pixellength * MAX_PIXELS), packet_size);
+        for (i=offset; i<packet_size; i+=pixellength) {
           x = packet[i  ] | (packet[i+1]&0xF0)<<4;
 	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
 	        r = packet[i+3];
@@ -131,10 +136,12 @@ int main(int argc, char* argv[])
 	        write_pixel_to_screen(x, y, r, g, b, a);
 	      }
 	      break;
+
 	    // Protocol 4: xyrgb 12:12:3:3:2 specified for each pixel
       case 4:
         pixellength = 4;
-        for (i=2; i<packet_size; i+=pixellength) {
+        packet_size = MIN(offset + (pixellength * MAX_PIXELS), packet_size);
+        for (i=offset; i<packet_size; i+=pixellength) {
           x = packet[i  ] | (packet[i+1]&0xF0)<<4;
 	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
 	        r = packet[i+3] & 0xE0;
@@ -144,10 +151,12 @@ int main(int argc, char* argv[])
 	        write_pixel_to_screen(x, y, r, g, b, a);
 	      }
 	      break;
+
 	    // Protocol 5: xyrgba 12:12:2:2:2:2 specified for each pixel
       case 5:
         pixellength = 4;
-        for (i=2; i<packet_size; i+=pixellength) {
+        packet_size = MIN(offset + (pixellength * MAX_PIXELS), packet_size);
+        for (i=offset; i<packet_size; i+=pixellength) {
           x = packet[i  ] | (packet[i+1]&0xF0)<<4;
 	        y = (packet[i+1]&0x0F) | packet[i+2]<<4;
 	        r = packet[i+3] & 0xC0;
@@ -157,16 +166,14 @@ int main(int argc, char* argv[])
 	        write_pixel_to_screen(x, y, r, g, b, a);
 	      }
 	      break;
-	    // Error no protocol defined
+
+	    // Error no recognied protocol defined
 	    default:
 	      break;
 	  }
-    
-    
   }
-  
-  // De init screen buffer
+
+  // Deinitialize screen buffer
   deinit_frame_buffer();
-  
   return 0; 
 }

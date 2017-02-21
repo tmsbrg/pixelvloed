@@ -22,9 +22,8 @@ struct fb_fix_screeninfo finfo;
 long int screensize = 0;
 char *fbp = 0;
   
-
 int8_t init_frame_buffer(void) {
-  // Open the file for reading and writing
+  // Open the framebuffer file for reading and writing
   fbfd = open("/dev/fb0", O_RDWR);
   if (!fbfd) {
     printf("Error: cannot open framebuffer device.\n");
@@ -37,7 +36,7 @@ int8_t init_frame_buffer(void) {
     printf("Error reading variable information.\n");
     return 0;
   }
-  printf("Screen info %dx%d, %dbpp\n", vinfo.xres, vinfo.yres, vinfo.bits_per_pixel );
+  printf("Screen info %dx%d, %dbpp\n", vinfo.xres, vinfo.yres, vinfo.bits_per_pixel);
 
   // Get fixed screen information
   if (ioctl(fbfd, FBIOGET_FSCREENINFO, &finfo)) {
@@ -74,14 +73,13 @@ int8_t init_frame_buffer(void) {
 }
 
 
-void deinit_frame_buffer(void)
-{
+void deinit_frame_buffer(void) {
   // cleanup
   munmap((void *)fbp, screensize);
   close(fbfd);
 }
 
-void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t a){
+void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
   uint32_t pix_offset;
   uint16_t temp_r, temp_g, temp_b;
   
@@ -94,16 +92,13 @@ void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t
   
   // If alpha is used calculate it, otherwise just paint the colors
   if (a != 0xFF) {
-  
     // Get the old pixel
-    if (vinfo.bits_per_pixel == 24) {
-      // 24bpp format
+    if (vinfo.bits_per_pixel == 24) { // 24bpp format
       pix_offset = 3 * x + y * finfo.line_length;
       temp_r = fbp[pix_offset+0];
       temp_g = fbp[pix_offset+1];
       temp_b = fbp[pix_offset+2];
-    } else if (vinfo.bits_per_pixel == 32) {
-      // 32bpp format
+    } else if (vinfo.bits_per_pixel == 32) { // 32bpp format
       pix_offset = 4 * x + y * finfo.line_length;
       temp_r = fbp[pix_offset+0];
       temp_g = fbp[pix_offset+1];
@@ -114,7 +109,7 @@ void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t
       temp_b = 0;
     }
     //printf("%08x : %04x %04x %04x\n", pixel.pixel32, temp_r, temp_g, temp_b);
-    // Aply alpha
+    // Apply alpha
     temp_r = (temp_r * (256-a))>>8;
     temp_r = temp_r + ((r * (a))>>8);
     temp_g = (temp_g * (256-a))>>8;
@@ -128,18 +123,12 @@ void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t
   }
   
   // Write new pixels to buffer
-  if (vinfo.bits_per_pixel == 24) {
-    // 24bpp format
+  if (vinfo.bits_per_pixel == 24) { // 24bpp format
     pix_offset = 3 * x + y * finfo.line_length;
-    fbp[pix_offset+2] = temp_r;
-    fbp[pix_offset+1] = temp_g;
-    fbp[pix_offset+0] = temp_b;
-  }
-  if (vinfo.bits_per_pixel == 32) {
-    // 32bpp format
+  } else if (vinfo.bits_per_pixel == 32) { // 32bpp format
     pix_offset = 4 * x + y * finfo.line_length;
-    fbp[pix_offset+2] = temp_r;
-    fbp[pix_offset+1] = temp_g;
-    fbp[pix_offset+0] = temp_b;
   }
+  fbp[pix_offset+2] = temp_r;
+  fbp[pix_offset+1] = temp_g;
+  fbp[pix_offset+0] = temp_b;
 }
