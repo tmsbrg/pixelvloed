@@ -24,6 +24,7 @@ The data describes the X and Y coordinates and the R, G, B and optional alpha co
 ####Alpha disabled
 Bytes/pixel:    7
 Pixels/message: 160
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
@@ -37,6 +38,7 @@ Pixels/message: 160
 ####Alpha enabled
 Bytes/pixel:    8
 Pixels/message: 140
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
@@ -64,6 +66,7 @@ The data describes the X and Y coordinates and the R, G, B and optional alpha co
 ####Alpha disabled
 Bytes/pixel:    6
 Pixels/message: 186
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
@@ -77,6 +80,7 @@ Pixels/message: 186
 ####Alpha enabled
 Bytes/pixel:    7
 Pixels/message: 160
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
@@ -104,6 +108,7 @@ The data describes the X and Y coordinates and the R, G, B and optional alpha co
 ####Alpha disabled
 Bytes/pixel:    4
 Pixels/message: 280
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
@@ -117,6 +122,7 @@ Pixels/message: 280
 ####Alpha enabled
 Bytes/pixel:    4
 Pixels/message: 280
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
@@ -144,6 +150,7 @@ The data describes the X and Y coordinates. Multiple pixels can be send in one m
 
 Bytes/pixel:    3
 Pixels/message: 373
+
 | Byte   | Bit     |   Contents                                                                    |
 |--------|---------|-------------------------------------------------------------------------------|
 | byte 0 | bit 7-0 | Lowest 8 bits of the X coordinate of the pixel.                               |
