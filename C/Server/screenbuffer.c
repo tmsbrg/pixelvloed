@@ -95,14 +95,14 @@ void write_pixel_to_screen(uint16_t x, uint16_t y, uint8_t r, uint8_t g, uint8_t
     // Get the old pixel
     if (vinfo.bits_per_pixel == 24) { // 24bpp format
       pix_offset = 3 * x + y * finfo.line_length;
-      temp_r = fbp[pix_offset+0];
+      temp_r = fbp[pix_offset+2];
       temp_g = fbp[pix_offset+1];
-      temp_b = fbp[pix_offset+2];
+      temp_b = fbp[pix_offset+0];
     } else if (vinfo.bits_per_pixel == 32) { // 32bpp format
       pix_offset = 4 * x + y * finfo.line_length;
-      temp_r = fbp[pix_offset+0];
+      temp_r = fbp[pix_offset+2];
       temp_g = fbp[pix_offset+1];
-      temp_b = fbp[pix_offset+2];
+      temp_b = fbp[pix_offset+0];
     } else {
       temp_r = 0;
       temp_g = 0;
