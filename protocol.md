@@ -1,15 +1,17 @@
 # The protocol for the UDP pixelvloed client and server
 
 Pixelvloed allows clients to send up to a specific amount of pixels per message.
-The amount of pixels depends on the protocol used. The maximal size of one pixelvloed packet is 1122 bytes.
-Each pixelvloed packet contains a header and a data part. The header defines the protocol used and its settings. The data describes the propperties of the individual pixels. All values used in messages should be little endian.
+The amount of pixels depends on the protocol used. The maximum size of one pixelvloed packet is 1122 bytes.
+Each pixelvloed packet contains a header and a data part. The header defines the protocol used and its data layout. The data describes the properties of the individual pixels. All values used in messages should be little endian.
 
-The header of a pixelvloed packet consists of two bytes. The first byte defines the version of the protocol used. The seccond byte defines the protocol settings. Both are explained for each protocol below in the table.
+Clients can switch between protocol versions at will between packets but not within packets.
 
-The data of a pixelvloed contains information on which pixels should get what color. The representation of this information is heavely dependend on the protocol used and is explained below.
+The header of a pixelvloed packet consists of two bytes. The first byte defines the version of the protocol used. The second byte defines the protocol settings. Both are explained for each protocol below in the table.
+
+The data of a pixelvloed packet contains information on which pixels should get what color. The representation of this information is heavily dependent on the protocol used and is explained below.
 
 ## Protocol: 0 (0x00)
-Protocol 0 is the simplest and easiest to use. Full 24 bit colors can be used with optinal alpha.
+Protocol 0 is the simplest and easiest to use. Full 24 bit colors can be used with optional alpha.
 
 ###Header
 | Byte   | Bit     |   Contents                                                                    |
@@ -93,7 +95,7 @@ Pixels/message: 160
 | byte 6 | bit 7-0 | Alpha color value.                                                            |
 
 ## Protocol: 2 (0x02)
-Protocol 1 compresses the coordinates and colors so more pixels may be send in one message. Only 8 bit colors can be used with optinal alpha.
+Protocol 2 compresses the coordinates and colors so more pixels may be send in one message. Only 8 bit colors can be used with optinal alpha.
 
 ###Header
 | Byte   | Bit     |   Contents                                                                    |
@@ -135,7 +137,7 @@ Pixels/message: 280
 | byte 3 | bit 1-0 | 2 bit alpha color value.                                                      |
 
 ## Protocol: 3 (0x03)
-Protocol 1 compresses the coordinates and colors so more pixels may be send in one message. Only 8 bit colors can be used with optinal alpha.
+Protocol 3 compresses the coordinates and colors so more pixels may be send in one message. Only 8 bit colors can be used with optinal alpha.
 
 ###Header
 | Byte   | Bit     |   Contents                                                                    |
