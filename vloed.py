@@ -24,6 +24,8 @@ PROTOCOL_VERSION = 1
 MAX_PROTOCOL_VERSION = 1
 PROTOCOL_PREAMBLE = "pixelvloed"
 MAX_PIXELS = 140
+MESSAGE_HEADER_SIZE = 2
+MAX_MESSAGE = MAX_PIXELS + MESSAGE_HEADER_SIZE
 
 class Canvas(object):
   """PixelVloed display class"""
@@ -263,7 +265,7 @@ class PixelVloedClient(object):
 
 def NewMessage():
   """Creates a new message with the correct max size, rgb mode and version"""
-  message = MaxSizeList(MAX_PIXELS+2)
+  message = MaxSizeList(MAX_MESSAGE)
   InitMessage(message)
   return message
 
@@ -302,6 +304,42 @@ class MaxSizeList(list):
     if self.__len__() == self.maxsize:
       raise IndexError('max size reached')
     super(MaxSizeList, self).append(item)
+
+class Packet(list):
+  """A Pixelvloed packet.
+
+  Append pixels to it. It will send automatically if it has MAX_PIXELS length.
+  """
+
+  def __init__(self, client):
+    """Create a new pixelvloed packet.
+
+    This packet can be reused for the whole program.
+
+    Arguments:
+      client: PixelVloedClient used to send the packet when it is full.
+    """
+    self.client = client
+    super(Packet, self).__init__()
+    InitMessage(self)
+
+  def append(self, item):
+    """Appends a pixel to this packet.
+
+    Sends pixels and resets the packet if packet would exceed MAX_MESSAGE
+    (MAX_PIXELS + MESSAGE_HEADER_SIZE).
+    """
+    if self.__len__() >= MAX_MESSAGE:
+      self._send()
+    super(Packet, self).append(item)
+
+  def flush(self):
+    """Immediately send all pixels currently in this packet and empty it"""
+    self._send()
+
+  def _send(self):
+    self.client.SendPacket(''.join(self))
+    del self[MESSAGE_HEADER_SIZE:] # reset packet
 
 def RunServer(options):
   """Runs a pixelvloed server"""
