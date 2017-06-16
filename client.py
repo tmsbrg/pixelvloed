@@ -11,15 +11,18 @@ __author__ = "Jan Klopper <jan@underdark.nl>"
 import random
 from vloed import PixelVloedClient, Packet, RGBPixel, MAX_PIXELS
 
-def RandomFill(pixels, width, height):
+def RandomFill(screen, width, height):
   """Generates a random number of pixels with a random color"""
-  for pixel in xrange(0, random.randint(10, MAX_PIXELS)):
-    pixel = RGBPixel(random.randint(0, width),
-                     random.randint(0, height),
-                     random.randint(0, 255),
-                     random.randint(0, 255),
-                     random.randint(0, 255))
-    pixels.append(pixel)
+  for _x in xrange(1, # at least one pixel
+                   random.randint(10, MAX_PIXELS) # at most the max number of pixels
+                   ):
+    pixel = RGBPixel(random.randint(0, width), # select a random position on the width of the screen
+                     random.randint(0, height), # select a random position on the height of the screen
+                     random.randint(0, 255), # select a random value for red
+                     random.randint(0, 255), # select a random value for green
+                     random.randint(0, 255) # select a random value for blue
+                     )
+    screen.show(pixel) # lets push the pixel to the screen!
 
 def RunClient(options):
   """Discover the servers and start sending to the first one"""
@@ -32,19 +35,14 @@ def RunClient(options):
                             options.height  # Screen pixels height, None for autodetect
                             )
 
+  # Lets create a screen which buffers the pixels we add to it, and sends them to the actual screen.
+  screen = Packet(client)
   # loop the effect until we cancel by pressing ctrl+c / exit the program
-  while True:
+  while screen:
 
-    # packet will automatically send its pixels if gets to the maximum pixel length
-    pixels = Packet(client)
-
-    # add some pixels to the output with our functions
+    # add some pixels to the screen with our functions
     # the width/height are read from the client's config
-    RandomFill(pixels, client.width, client.height)
-
-    # send whatever pixels are left in the packet
-    pixels.flush()
-
+    RandomFill(screen, client.width, client.height)
 
 if __name__ == '__main__':
   # if this script is called from the command line, and thus not imported

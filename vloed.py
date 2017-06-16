@@ -173,29 +173,47 @@ class PixelVloedClient(object):
   """Sets up a client
 
   Arguments:
-    firstserver: (bool) False, select the first server immediately
+    firstserver: (bool) True, select the first server immediately
     debug: (bool) False
     ip: (str) None
     port: (int) None
     width: (int) 640
     height: (int) 480
+  Listens for servers if no ip is given,
 
-  Listens for servers if no ip is given
+  It will bind to the first server it hears of when firstserver is set to True.
+  Otherwise if will show a list of servers if a choise if available.
   """
 
-  def __init__(self, firstserver=False, debug=False,
+  def __init__(self, firstserver=True, debug=False,
                ip=None, port=None,
-               width=640, height=480):
+               width=640, height=480,
+               autoconnect=True):
     self.sleep = 0.01
     self.debug = debug
     if not ip:
       servers = False
       while servers == False:
         servers = self.DiscoverServers(firstserver)
-      self.ipaddress = servers[0]['ip']
-      self.port = servers[0]['port']
-      self.width = servers[0]['width']
-      self.height = servers[0]['height']
+      if firstserver or len(servers) == 1:
+        self.ipaddress = servers[0]['ip']
+        self.port = servers[0]['port']
+        self.width = servers[0]['width']
+        self.height = servers[0]['height']
+      else:
+        # lets list all found servers and allow the user to make a selection
+        for i in xrange(0, len(servers)):
+          print('ID: %d' % i)
+          print('%(ip)s:%(port)d, %(width)d*%(height)dpx\n' % servers[i])
+        while not self.ipaddress:
+          try:
+            choice = int(raw_input("Which server? Type the ID"))
+            self.ipaddress = servers[choice]['ip']
+            self.port = servers[choice]['port']
+            self.width = servers[choice]['width']
+            self.height = servers[choice]['height']
+          except:
+            print("Invalid input received, try again.")
 
       if self.debug:
         print('displaying on %(ip)s:%(port)d, %(width)d*%(height)dpx' %
@@ -207,10 +225,7 @@ class PixelVloedClient(object):
       self.height = height
       if self.debug:
         print('displaying on %(ipaddress)s:%(port)d, %(width)d*%(height)dpx' %
-            {'ipaddress': self.ipaddress,
-             'port': self.port,
-             'width': self.width,
-             'height': self.height})
+          self.__dict__)
     self.sock = socket.socket(socket.AF_INET, # Internet
                               socket.SOCK_DGRAM) # UDP
 
@@ -229,8 +244,7 @@ class PixelVloedClient(object):
     if sleep:
       self.Sleep(duration=sleep)
 
-  @staticmethod
-  def DiscoverServers(returnfirst=False, timeout=5):
+  def DiscoverServers(self, returnfirst=False, timeout=5):
     """Discover servers that send out the pixelvloed preample"""
     discoverysock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     discoverysock.bind(('', DISCOVER_PORT))
@@ -242,6 +256,7 @@ class PixelVloedClient(object):
       try:
         if data.startswith(PROTOCOL_PREAMBLE):
           dataset = data.split(' ')
+
           if float(dataset[0].split(':')[1]) <= MAX_PROTOCOL_VERSION:
             ipaddress = dataset[1].split(':')[0]
             port = int(dataset[1].split(':')[1])
@@ -253,10 +268,14 @@ class PixelVloedClient(object):
                            'width': width,
                            'height': height}
               foundhash[data] = True
-              print('New pixelvloed screen found: %r' % newserver)
               servers.append(newserver)
+              if self.debug:
+                print('New pixelvloed screen found: %r' % newserver)
               if returnfirst:
                 return servers
+            elif self.debug:
+              print('''skipping pixelvloed screen that we already knew
+                  about %r''' % newserver)
       except:
         pass
     if servers:
@@ -333,6 +352,10 @@ class Packet(list):
       self._send()
     super(Packet, self).append(item)
 
+  def show(self, item):
+    """Nicer name for append"""
+    return self.append(item)
+
   def flush(self):
     """Immediately send all pixels currently in this packet and empty it"""
     self._send()
@@ -340,6 +363,10 @@ class Packet(list):
   def _send(self):
     self.client.SendPacket(''.join(self))
     del self[MESSAGE_HEADER_SIZE:] # reset packet
+
+  def __del__(self):
+    """Clean up by sending any remaining pixels"""
+    self._send()
 
 def RunServer(options):
   """Runs a pixelvloed server"""
