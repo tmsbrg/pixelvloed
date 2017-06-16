@@ -52,7 +52,7 @@ Pixels/message: 140
 | byte 6 | bit 7-0 | B color value.                                                                |
 | byte 7 | bit 7-0 | Alpha color value.                                                            |
 
-## Protocol: 1 (0x01)
+## Protocol: 1 (0x01) Only supported on the C server
 Protocol 1 compresses the coordinates so more pixels may be send in one message. Full 24 bit colors can be used with optinal alpha.
 
 ###Header
@@ -94,7 +94,7 @@ Pixels/message: 160
 | byte 5 | bit 7-0 | B color value.                                                                |
 | byte 6 | bit 7-0 | Alpha color value.                                                            |
 
-## Protocol: 2 (0x02)
+## Protocol: 2 (0x02) Only supported on the C server
 Protocol 2 compresses the coordinates and colors so more pixels may be send in one message. Only 8 bit colors can be used with optinal alpha.
 
 ###Header
@@ -136,7 +136,7 @@ Pixels/message: 280
 | byte 3 | bit 3-2 | 2 bit B color value.                                                          |
 | byte 3 | bit 1-0 | 2 bit alpha color value.                                                      |
 
-## Protocol: 3 (0x03)
+## Protocol: 3 (0x03) Only supported on the C server
 Protocol 3 compresses the coordinates and colors so more pixels may be send in one message. Only 8 bit colors can be used with optinal alpha.
 
 ###Header
@@ -160,7 +160,7 @@ Pixels/message: 373
 | byte 1 | bit 7-4 | Lowest 4 bits of the Y coordinate of the pixel.                               |
 | byte 2 | bit 7-0 | Highest 8 bits of the Y coordinate of the pixel.                              |
 
-# The Autodetection system
+# The Autodetection system, Only supported on the Python servers
 
 A pixelvloed server should broadcast a package advertising its settings with the following string content
 

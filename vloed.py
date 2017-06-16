@@ -132,19 +132,19 @@ class Canvas(object):
         pixelcount = min(((len(data)-1) / pixellength),
                          self.limit)
         if self.debug:
-          print '%d pixels received, protocol V %d' % (pixelcount, protocol)
+          print('%d pixels received, protocol V %d' % (pixelcount, protocol))
         for i in xrange(0, pixelcount):
           pixel = struct.unpack_from(
               packetformat,
               data,
               self.pixeloffset + (i*pixellength))
           if self.debug:
-            print pixel
+            print(pixel)
           self.Pixel(*pixel)
       except Exception as error:
         if self.debug:
           # All exceptions will be printed, but won't result in a crash.
-          print error
+          print(error)
     # indicate that we have been drawing stuff
     return True
 
@@ -158,10 +158,10 @@ class Canvas(object):
               self.width/self.factor, self.height/self.factor),
           ('<broadcast>', DISCOVER_PORT))
       if self.debug:
-        print 'sending discovery packet'
+        print('sending discovery packet')
     except Exception as error:
       if self.debug:
-        print error
+        print(error)
 
   def __del__(self):
     """Clean up any sockets we created"""
@@ -196,7 +196,7 @@ class PixelVloedClient(object):
       self.height = servers[0]['height']
 
       if self.debug:
-        print ('displaying on %(ip)s:%(port)d, %(width)d*%(height)dpx' %
+        print('displaying on %(ip)s:%(port)d, %(width)d*%(height)dpx' %
             servers[0])
     else:
       self.ipaddress = ip
@@ -204,7 +204,7 @@ class PixelVloedClient(object):
       self.width = width
       self.height = height
       if self.debug:
-        print ('displaying on %(ipaddress)s:%(port)d, %(width)d*%(height)dpx' %
+        print('displaying on %(ipaddress)s:%(port)d, %(width)d*%(height)dpx' %
             {'ipaddress': self.ipaddress,
              'port': self.port,
              'width': self.width,
@@ -251,7 +251,7 @@ class PixelVloedClient(object):
                            'width': width,
                            'height': height}
               foundhash[data] = True
-              print 'New pixelvloed screen found: %r' % newserver
+              print('New pixelvloed screen found: %r' % newserver)
               servers.append(newserver)
               if returnfirst:
                 return servers
@@ -342,4 +342,4 @@ if __name__ == '__main__':
   try:
     RunServer(options)
   except KeyboardInterrupt:
-    print 'Closing server'
+    print('Closing server')
